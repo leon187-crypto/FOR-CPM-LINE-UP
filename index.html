@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  
+  <!-- Native Mobile & APK Standalone WebApp Settings -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GridBase">
+  <meta name="theme-color" content="#090d16">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href='data:application/manifest+json,{"name":"GridBase CPM Line-up","short_name":"GridBase","start_url":".","display":"standalone","background_color":"#090d16","theme_color":"#090d16","orientation":"any"}'>
+
+  <title>GridBase — Spreadsheet Database</title>
+  <style>
+    /* ========================================================
+       COLOR THEMES (NORMAL LIGHT & NIGHT DARK MODE)
+       ======================================================== */
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --border-dark: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --danger-light: #fef2f2;
+      --success: #10b981;
+      --th-bg: #f8fafc;
+      --radius: 8px;
+      --touch-target: 40px;
+      --page-margin: 16px;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body.dark {
+      --bg: #090d16;
+      --surface: #172033;
+      --border: #28354d;
+      --border-dark: #3b4c6b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --primary-light: #1e293b;
+      --danger-light: #3f1212;
+      --th-bg: #111827;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      font-size: 13px;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      transition: background-color 0.2s ease, color 0.2s ease;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Page Container */
+    .page-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      max-width: 1540px;
+      margin: 0 auto;
+      padding-left: var(--page-margin);
+      padding-right: var(--page-margin);
+    }
+
+    /* Header & Navigation */
+    header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+      z-index: 30;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      gap: 8px;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .brand svg { width: 22px; height: 22px; }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    /* View Switcher */
+    .view-toggle {
+      display: inline-flex;
+      background: var(--border);
+      padding: 2px;
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .view-toggle button {
+      border: none;
+      background: transparent;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      min-height: 32px;
+    }
+    .view-toggle button.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Search & Filters */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    .search-bar input[type="search"] {
+      flex: 1 1 180px;
+      min-width: 120px;
+      text-align: left;
+      min-height: var(--touch-target);
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .search-bar select {
+      flex: 0 1 140px;
+      min-height: var(--touch-target);
+    }
+
+    /* Base Buttons & Inputs */
+    button, .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border-dark);
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      min-height: var(--touch-target);
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s, transform 0.05s;
+      user-select: none;
+      touch-action: manipulation;
+    }
+    button:active, .btn:active {
+      background: var(--border);
+      transform: scale(0.97);
+    }
+    
+    button.primary {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    button.primary:active { background: var(--primary-hover); }
+    
+    button.manual-save-btn.has-unsaved {
+      background: #ea580c !important;
+      border-color: #c2410c !important;
+      color: #ffffff !important;
+      animation: pulseSave 2s infinite ease-in-out;
+    }
+    @keyframes pulseSave {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4); }
+      50% { box-shadow: 0 0 0 4px rgba(234, 88, 12, 0); }
+    }
+
+    button.danger { 
+      color: var(--danger); 
+      border-color: #fca5a5;
+    }
+    body.dark button.danger { border-color: #7f1d1d; }
+    button.danger:active { background: var(--danger-light); }
+    
+    button.danger-solid {
+      background: var(--danger);
+      color: white;
+      border-color: var(--danger);
+    }
+    button.danger-solid:active { background: var(--danger-hover); }
+
+    input, select, textarea {
+      font-family: inherit;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-dark);
+      padding: 6px 10px;
+      font-size: 13px;
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      text-align: center !important;
+      text-align-last: center !important;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.25);
+    }
+
+    /* Stacked Name Wrappers & Micro Action Buttons */
+    .stacked-name-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+      gap: 4px;
+      padding: 4px 2px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .stacked-name-text {
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--text);
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      line-height: 1.35;
+      text-align: center !important;
+      text-align-last: center !important;
+      cursor: pointer;
+      width: 100%;
+      display: block;
+      margin: 0 auto;
+      transition: color 0.15s;
+    }
+    .stacked-name-text:hover { color: var(--primary); }
+
+    .stacked-actions-row {
+      display: flex;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+      gap: 4px;
+      flex-wrap: wrap;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .row-num, .card-row-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .action-icon-btn {
+      padding: 0;
+      min-height: 24px;
+      height: 24px;
+      width: 24px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .action-icon-btn:hover { background: var(--border); }
+    .action-icon-btn.danger:hover { background: var(--danger-light); border-color: #fca5a5; }
+
+    /* Touch Toggle Switch */
+    .touch-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin: 0 auto;
+    }
+    .touch-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .touch-switch .switch-slider {
+      position: absolute;
+      inset: 0;
+      background-color: var(--border-dark);
+      border-radius: 24px;
+      transition: background-color 0.2s;
+    }
+    .touch-switch .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .touch-switch input:checked + .switch-slider { background-color: #10b981; }
+    .touch-switch input:checked + .switch-slider:before { transform: translateX(20px); }
+
+    /* Cell Inputs */
+    .cell-input {
+      width: 100%;
+      min-height: 28px;
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 4px 6px;
+      font-size: 13px;
+      border-radius: 4px;
+      outline: none;
+      text-align: center !important;
+      text-align-last: center !important;
+      line-height: 1.35;
+      margin: 0 auto;
+    }
+    .cell-input:focus {
+      background: var(--surface);
+      border-color: var(--primary);
+    }
+
+    textarea.cell-textarea {
+      resize: none;
+      overflow-x: hidden !important;
+      overflow-y: hidden;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      display: block;
+      width: 100%;
+      min-height: 28px;
+      line-height: 1.35;
+      padding: 5px 6px;
+      font-family: inherit;
+      text-align: center !important;
+      text-align-last: center !important;
+      margin: 0 auto;
+    }
+
+    select.cell-input option {
+      background: var(--surface);
+      color: var(--text);
+      text-align: center !important;
+    }
+
+    /* Content Area & Tables */
+    .content-area {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .table-container {
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      background: var(--surface);
+    }
+
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: max-content;
+      min-width: 100%;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      padding: 6px 8px;
+      vertical-align: middle !important;
+      min-height: 44px;
+      height: auto;
+      text-align: center !important;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: var(--th-bg);
+      font-weight: 600;
+      color: var(--text-muted);
+      z-index: 10;
+      user-select: none;
+      border-bottom: 2px solid var(--border);
+      text-align: center !important;
+      vertical-align: middle !important;
+      padding: 6px 8px;
+    }
+
+    .col-fixed {
+      position: sticky;
+      left: 0;
+      width: 190px;
+      min-width: 190px;
+      max-width: 190px;
+      text-align: center !important;
+      vertical-align: middle !important;
+      background: var(--th-bg);
+      border-right: 2px solid var(--border) !important;
+      z-index: 5;
+    }
+    thead th.col-fixed, tfoot td.col-fixed { z-index: 20; }
+    body.dark .col-fixed { background: var(--surface) !important; }
+
+    .col-type-tag {
+      font-size: 10px;
+      padding: 1px 5px;
+      background: var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .add-field-btn {
+      width: auto !important;
+      max-width: 90% !important;
+      margin: 0 auto !important;
+      padding: 4px 12px !important;
+      font-size: 12px !important;
+      min-height: 28px !important;
+      height: 28px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: var(--radius);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    tbody tr:hover td { background-color: var(--th-bg); }
+
+    /* Vertical Grid Headers */
+    .vertical-field-header {
+      position: sticky;
+      left: 0;
+      width: 220px;
+      min-width: 220px;
+      max-width: 220px;
+      background: var(--th-bg) !important;
+      border-right: 2px solid var(--border) !important;
+      z-index: 6;
+      text-align: center !important;
+      vertical-align: middle !important;
+      font-weight: 600;
+      padding: 6px 8px;
+    }
+    body.dark .vertical-field-header { background: var(--surface) !important; }
+
+    thead th.vertical-corner-header {
+      position: sticky;
+      left: 0;
+      top: 0;
+      width: 220px;
+      min-width: 220px;
+      max-width: 220px;
+      background: var(--border) !important;
+      border-right: 2px solid var(--border) !important;
+      z-index: 25;
+      text-align: center !important;
+      vertical-align: middle !important;
+      white-space: nowrap !important;
+      padding: 6px 8px;
+    }
+
+    /* Cards View */
+    .cards-container {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center !important;
+      gap: 16px;
+      background: var(--bg);
+    }
+    .record-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 18px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center !important;
+      gap: 14px;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center !important;
+      justify-content: center !important;
+      border-bottom: 1.5px solid var(--border);
+      padding-bottom: 12px;
+      gap: 8px;
+      width: 100%;
+      text-align: center !important;
+    }
+    .card-title {
+      font-weight: 800;
+      font-size: 15px;
+      color: var(--text);
+      text-align: center !important;
+      text-align-last: center !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      line-height: 1.35;
+      cursor: pointer;
+      width: 100%;
+      margin: 0 auto;
+      display: block;
+      transition: color 0.15s;
+    }
+    .card-title:hover { color: var(--primary); }
+
+    .card-header-actions-row {
+      display: flex;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px;
+      flex-wrap: wrap;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .card-header-actions-row button {
+      min-height: 28px;
+      padding: 3px 10px;
+      font-size: 12px;
+    }
+
+    .card-field-vertical {
+      display: flex;
+      flex-direction: column;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px;
+      width: 100%;
+      text-align: center !important;
+    }
+    .card-field-header-stacked {
+      display: flex;
+      flex-direction: column;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px;
+      width: 100%;
+      text-align: center !important;
+    }
+    .card-field-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      line-height: 1.25;
+      text-align: center !important;
+      text-align-last: center !important;
+      display: block;
+      width: 100%;
+      margin: 0 auto;
+      transition: color 0.15s;
+    }
+    .card-field-name:hover { color: var(--primary); }
+
+    .card-control-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center !important;
+      align-items: center !important;
+      margin: 0 auto;
+    }
+
+    .card-cell-input {
+      width: 100%;
+      max-width: 600px;
+      min-height: 36px !important;
+      background: var(--surface) !important;
+      color: var(--text) !important;
+      border: 1.5px solid var(--border-dark) !important;
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      font-size: 13px;
+      text-align: center !important;
+      text-align-last: center !important;
+      cursor: text;
+      margin: 0 auto;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .card-cell-input:focus {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.25) !important;
+    }
+
+    /* Modals & Android Bottom Sheet */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(3px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.2s ease, visibility 0.2s;
+    }
+    .modal-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .modal {
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 14px;
+      width: 480px;
+      max-width: 94vw;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .modal-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .modal-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 70vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .modal-body button {
+      width: 100%;
+      min-height: 44px;
+      font-size: 13px;
+    }
+    .modal-footer {
+      padding: 12px 16px;
+      background: var(--th-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+    .modal-footer button {
+      min-height: 38px;
+      padding: 8px 16px;
+      flex: 1 1 auto;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* Vertical Field Type Selector in Modal */
+    .field-type-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+    .field-type-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      min-height: 46px;
+      touch-action: manipulation;
+      transition: border-color 0.15s, background-color 0.15s;
+    }
+    .field-type-item:hover, .field-type-item:active { background: var(--border); }
+    .field-type-item.selected {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .field-icon {
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      background: var(--surface);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+    .field-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
+    .field-title { font-weight: 600; font-size: 13px; color: var(--text); }
+    .field-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .field-radio {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-dark);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .field-type-item.selected .field-radio {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+    .field-type-item.selected .field-radio:after {
+      content: "";
+      width: 6px;
+      height: 6px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: max(24px, env(safe-area-inset-bottom) + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #0f172a;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+      z-index: 200;
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    body.dark .toast {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ========================================================
+       AUTOMATIC MOBILE ADAPTIVE ENGINE (FOR ALL MOBILES / APKs)
+       ======================================================== */
+    @media (max-width: 768px) {
+      :root {
+        --page-margin: 6px;
+        --touch-target: 38px;
+      }
+      header {
+        padding: 6px 8px;
+        gap: 6px;
+      }
+      .header-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        flex-wrap: nowrap;
+      }
+      .brand-wrap {
+        flex-shrink: 1;
+        overflow: hidden;
+      }
+      .brand span {
+        font-size: 15px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+      .brand svg { width: 20px; height: 20px; }
+      
+      .header-controls {
+        flex-wrap: nowrap;
+        gap: 4px;
+        justify-content: flex-end;
+      }
+      .header-controls button {
+        padding: 4px 8px;
+        font-size: 11px;
+        min-height: 32px;
+      }
+      .view-toggle button {
+        padding: 4px 6px;
+        font-size: 11px;
+        min-height: 28px;
+      }
+      .search-bar {
+        gap: 4px;
+      }
+      .search-bar input[type="search"] {
+        flex: 1 1 120px;
+        font-size: 13px !important;
+        min-height: 34px;
+      }
+      .search-bar select {
+        flex: 0 1 100px;
+        font-size: 12px !important;
+        min-height: 34px;
+      }
+
+      /* Auto-Adjusted Vertical Grid for Small Mobile Screens */
+      .vertical-field-header, thead th.vertical-corner-header {
+        width: 140px !important;
+        min-width: 130px !important;
+        max-width: 150px !important;
+        font-size: 11px !important;
+        padding: 4px 2px !important;
+      }
+      .vertical-field-header .stacked-name-text, thead th.vertical-corner-header .stacked-name-text {
+        font-size: 11px !important;
+        line-height: 1.25;
+      }
+      #verticalTable th:not(.vertical-corner-header):not(.vertical-field-header) {
+        width: 250px !important;
+        min-width: 230px !important;
+      }
+      .col-fixed {
+        width: 135px !important;
+        min-width: 130px !important;
+        max-width: 145px !important;
+        font-size: 11px !important;
+        padding: 4px 2px !important;
+      }
+      
+      /* Mobile Text Inputs */
+      .cell-input, textarea.cell-textarea {
+        font-size: 13px !important;
+        padding: 4px 3px !important;
+      }
+
+      /* Native Android / iOS Bottom Sheet for Modals */
+      .modal-overlay { align-items: flex-end; }
+      .modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        max-height: 88vh;
+        transform: translateY(100%);
+      }
+      .modal-overlay.active .modal { transform: translateY(0); }
+      .desktop-only { display: none !important; }
+    }
+
+    @media (min-width: 769px) {
+      header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header-top { width: auto; }
+      .search-bar { width: auto; }
+      .mobile-only { display: none !important; }
+    }
+  </style>
+</head>
+<body class="dark">
+
+  <!-- Framed Page Container -->
+  <div class="page-container">
+
+    <!-- Header -->
+    <header>
+      <div class="header-top">
+        <div class="brand-wrap">
+          <div class="brand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3h18v18H3zM3 9h18M9 21V9"/></svg>
+            <span>GridBase</span>
+          </div>
+        </div>
+
+        <div class="header-controls">
+          <!-- Night Mode Switcher -->
+          <button id="themeToggleBtn" onclick="toggleTheme()" title="Switch to Normal (Light) Mode">☀️ Normal</button>
+
+          <!-- View Switcher -->
+          <div class="view-toggle">
+            <button id="viewGridBtn" onclick="switchView('grid')">H</button>
+            <button id="viewVerticalBtn" class="active" onclick="switchView('vertical')">Vertical</button>
+            <button id="viewCardsBtn" onclick="switchView('cards')">Cards</button>
+          </div>
+
+          <!-- New Clean Blank Page Button -->
+          <button onclick="newBlankPage()" title="Start a fresh, clean blank page">📄 New</button>
+
+          <!-- Sole Manual Save Button -->
+          <button class="primary manual-save-btn" id="manualSaveBtn" onclick="manualSave()" title="Save database">💾 Save</button>
+          
+          <!-- Mobile Menu Drawer (•••) -->
+          <button class="mobile-only" onclick="openModal('menuModal')" title="More actions">•••</button>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <input type="search" id="searchInput" placeholder="Search song or field..." oninput="handleSearch(this.value)">
+        <select id="filterColumn" onchange="applyFilters()">
+          <option value="">All Fields</option>
+        </select>
+
+        <button class="mobile-only" onclick="addRow()" style="min-height:34px; padding:4px 10px;">+ Row</button>
+
+        <div class="desktop-only" style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button onclick="addRow()">+ Add Row</button>
+          <button onclick="loadSavedData()" title="Load last saved database">📂 Load</button>
+          <button onclick="openColumnModal()">+ Field</button>
+          <button onclick="generatePrintable()" title="Generate printable report with Auto-Fit & PNG download">🖨️ Printable</button>
+          <button onclick="exportCSV()">Export CSV</button>
+          <button onclick="exportJSON()">Backup</button>
+          <button onclick="document.getElementById('importFile').click()">Restore</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+          <button onclick="loadDefaultTemplate(); render(); showToast('🎵 Loaded CPM Line-up');" title="Load the default CPM Line-up template">🎵 CPM Line-up</button>
+          <button class="danger" onclick="clearData()">Reset</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Interactive Data Viewports -->
+    <div class="content-area">
+      <!-- View 1: Horizontal Table -->
+      <div class="table-container" id="gridContainer" style="display: none;">
+        <table id="dataTable">
+          <thead><tr id="tableHeader"></tr></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- View 2: Vertical Table (DEFAULT ACTIVE) -->
+      <div class="table-container" id="verticalContainer" style="display: block;">
+        <table id="verticalTable">
+          <thead><tr id="verticalHeader"></tr></thead>
+          <tbody id="verticalBody"></tbody>
+        </table>
+      </div>
+
+      <!-- View 3: Cards View -->
+      <div class="cards-container" id="cardsContainer" style="display: none;"></div>
+    </div>
+
+  </div> <!-- End .page-container -->
+
+  <!-- Mobile Options Drawer (Android Bottom Sheet) -->
+  <div class="modal-overlay" id="menuModal" onclick="if(event.target === this) closeModal('menuModal')">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Database Tools & Options</span>
+        <button class="action-icon-btn" onclick="closeModal('menuModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <button onclick="closeModal('menuModal'); addRow();">+ Add New Column / Row</button>
+        <button onclick="closeModal('menuModal'); newBlankPage();">📄 New Clean Blank Page</button>
+        <button onclick="closeModal('menuModal'); loadDefaultTemplate(); render(); showToast('🎵 Loaded CPM Line-up');">🎵 Load CPM Line-up Template</button>
+        <button class="primary manual-save-btn" onclick="closeModal('menuModal'); manualSave();">💾 Save Database Now</button>
+        <button onclick="closeModal('menuModal'); loadSavedData();">📂 Load Saved Database</button>
+        <button onclick="closeModal('menuModal'); generatePrintable();">🖨️ Printable Report / PNG Image</button>
+        <button onclick="toggleTheme()">🌓 Switch Theme (Night/Normal)</button>
+        <button onclick="closeModal('menuModal'); openColumnModal();">+ Add Field (New Song Type)</button>
+        <button onclick="closeModal('menuModal'); exportCSV();">Export as CSV</button>
+        <button onclick="closeModal('menuModal'); exportJSON();">Download Backup File (JSON)</button>
+        <button onclick="closeModal('menuModal'); document.getElementById('importFile').click();">Restore from Backup File</button>
+        <button class="danger" onclick="closeModal('menuModal'); clearData();">Reset to Default CPM Line-up</button>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('menuModal')" style="width: 100%;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Field Modal -->
+  <div class="modal-overlay" id="columnModal" onclick="if(event.target === this) closeModal('columnModal')">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Add Field</span>
+        <button class="action-icon-btn" onclick="closeModal('columnModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Field Name (Press Enter to add new line)</label>
+          <textarea id="colNameInput" class="cell-textarea" rows="1" placeholder="e.g. CLOSING SONG" 
+            oninput="autoResizeTextarea(this)"
+            onkeyup="autoResizeTextarea(this)"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Select Field Type</label>
+          <div class="field-type-list" id="typeList">
+            <div class="field-type-item selected" onclick="selectFieldType('text')">
+              <span class="field-icon">📝</span>
+              <div class="field-info">
+                <span class="field-title">Multiline Text</span>
+                <span class="field-desc">Single-line (expands when pressing Enter)</span>
+              </div>
+              <span class="field-radio"></span>
+            </div>
+            <div class="field-type-item" onclick="selectFieldType('number')">
+              <span class="field-icon">🔢</span>
+              <div class="field-info">
+                <span class="field-title">Number</span>
+                <span class="field-desc">Prices, counts, percentages, amounts</span>
+              </div>
+              <span class="field-radio"></span>
+            </div>
+            <div class="field-type-item" onclick="selectFieldType('select')">
+              <span class="field-icon">🏷️</span>
+              <div class="field-info">
+                <span class="field-title">Dropdown / Select</span>
+                <span class="field-desc">Status tags, categories, choices</span>
+              </div>
+              <span class="field-radio"></span>
+            </div>
+            <div class="field-type-item" onclick="selectFieldType('date')">
+              <span class="field-icon">📅</span>
+              <div class="field-info">
+                <span class="field-title">Date</span>
+                <span class="field-desc">Due dates, deadlines, timestamps</span>
+              </div>
+              <span class="field-radio"></span>
+            </div>
+            <div class="field-type-item" onclick="selectFieldType('checkbox')">
+              <span class="field-icon">🔘</span>
+              <div class="field-info">
+                <span class="field-title">Toggle Switch</span>
+                <span class="field-desc">Done / Undone, Yes / No boolean</span>
+              </div>
+              <span class="field-radio"></span>
+            </div>
+          </div>
+          <input type="hidden" id="colTypeInput" value="text">
+        </div>
+
+        <div class="form-group" id="colOptionsGroup" style="display: none;">
+          <label>Options (comma separated)</label>
+          <input type="text" id="colChoicesInput" placeholder="High, Medium, Low">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('columnModal')">Cancel</button>
+        <button class="primary" onclick="saveColumn()">Create Field</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rename Field Modal -->
+  <div class="modal-overlay" id="renameFieldModal" onclick="if(event.target === this) closeModal('renameFieldModal')">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <span>Rename Field</span>
+        <button class="action-icon-btn" onclick="closeModal('renameFieldModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Field Name (Press Enter to add new line)</label>
+          <textarea id="renameFieldInput" class="cell-textarea" rows="1" placeholder="Enter field name..." 
+            oninput="autoResizeTextarea(this)"
+            onkeyup="autoResizeTextarea(this)"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('renameFieldModal')">Cancel</button>
+        <button class="primary" onclick="saveFieldRename()">Save Field Name</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rename Row Modal -->
+  <div class="modal-overlay" id="renameRowModal" onclick="if(event.target === this) closeModal('renameRowModal')">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <span>Rename Column / Row</span>
+        <button class="action-icon-btn" onclick="closeModal('renameRowModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Title (Press Enter to add new line)</label>
+          <textarea id="renameRowInput" class="cell-textarea" rows="1" placeholder="e.g. CPM LINE-UP" 
+            oninput="autoResizeTextarea(this)"
+            onkeyup="autoResizeTextarea(this)"></textarea>
+          <small style="color:var(--text-muted); font-size:11px; margin-top:2px; text-align:center; display:block;">Renaming will not change any cell values inside.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('renameRowModal')">Cancel</button>
+        <button class="primary" onclick="saveRowRename()">Save Title</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal" onclick="if(event.target === this) closeModal('confirmModal')">
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <span id="confirmModalTitle">Are you sure?</span>
+        <button class="action-icon-btn" onclick="closeModal('confirmModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmModalMessage" style="font-size: 14px; line-height: 1.5; color: var(--text); text-align:center;"></p>
+      </div>
+      <div class="modal-footer">
+        <button onclick="closeModal('confirmModal')">Cancel</button>
+        <button class="danger-solid" id="confirmOkBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'gridbase_db_master_data';
+
+    /* DEFAULT STARTUP TEMPLATE: CPM LINE-UP (9 Fields) */
+    const DEFAULT_SCHEMA = [
+      { id: 'f1', name: 'MARIAN SONG', type: 'text', width: 220 },
+      { id: 'f2', name: 'ENTHRONEMENT SONG', type: 'text', width: 220 },
+      { id: 'f3', name: 'JOYFUL SONG', type: 'text', width: 220 },
+      { id: 'f4', name: 'GOSPEL SONG', type: 'text', width: 220 },
+      { id: 'f5', name: 'WORD SHARER / TALK', type: 'text', width: 220 },
+      { id: 'f6', name: 'WORSHIP SONG', type: 'text', width: 220 },
+      { id: 'f7', name: 'THANKS GIVING SONG', type: 'text', width: 220 },
+      { id: 'f8', name: 'OFFERTORY SONG', type: 'text', width: 220 },
+      { id: 'f9', name: 'FINALLY SONG', type: 'text', width: 220 }
+    ];
+
+    const DEFAULT_RECORDS = [
+      {
+        id: 'r1',
+        _name: 'CPM LINE-UP ( YOU CAN ADD DATE AND WORSHIP LEADER HERE )',
+        f1: '',
+        f2: '',
+        f3: '',
+        f4: '',
+        f5: '',
+        f6: '',
+        f7: '',
+        f8: '',
+        f9: ''
+      }
+    ];
+
+    /* CLEAN / BLANK SHEET TEMPLATE (Used when clicking "📄 New") */
+    const BLANK_PAGE_SCHEMA = [
+      { id: 'f1', name: 'Column 1', type: 'text', width: 220 }
+    ];
+
+    const BLANK_PAGE_RECORDS = [
+      { id: 'r1', _name: 'Row 1', f1: '' }
+    ];
+
+    let state = {
+      schema: [],
+      records: [],
+      sort: { colId: null, direction: 'asc' },
+      searchQuery: '',
+      filterCol: '',
+      activeView: 'vertical',
+      theme: 'dark'
+    };
+
+    let hasUnsavedChanges = false;
+    let pendingConfirmAction = null;
+    let activeRenameRowId = null;
+    let activeRenameFieldId = null;
+
+    /* NATIVE ANDROID / MOBILE APK HARDWARE BACK BUTTON HANDLING */
+    window.addEventListener('popstate', (e) => {
+      const activeModal = document.querySelector('.modal-overlay.active');
+      if (activeModal) {
+        activeModal.classList.remove('active');
+        render();
+      }
+    });
+
+    /* OPENS WITH CPM LINE-UP AS DEFAULT & AUTO-ADJUSTS FOR MOBILE */
+    function init() {
+      loadDefaultTemplate();
+      updateManualSaveBtn();
+      updateThemeUI();
+      
+      // Auto-adjust view switch buttons for mobile
+      handleScreenResize();
+
+      switchView('vertical');
+      window.addEventListener('resize', () => {
+        handleScreenResize();
+        adjustAllTextareas();
+      });
+      window.addEventListener('orientationchange', () => {
+        setTimeout(adjustAllTextareas, 200);
+      });
+    }
+
+    function handleScreenResize() {
+      const isMobile = window.innerWidth <= 768;
+      const hBtn = document.getElementById('viewGridBtn');
+      if (hBtn) {
+        hBtn.innerText = isMobile ? 'H' : 'Horizontal';
+      }
+    }
+
+    function loadDefaultTemplate() {
+      state.schema = JSON.parse(JSON.stringify(DEFAULT_SCHEMA));
+      state.records = JSON.parse(JSON.stringify(DEFAULT_RECORDS));
+      state.sort = { colId: null, direction: 'asc' };
+      state.searchQuery = '';
+      state.filterCol = '';
+      hasUnsavedChanges = false;
+    }
+
+    /* "NEW" BUTTON: CREATES A COMPLETELY CLEAN / BLANK PAGE */
+    function newBlankPage() {
+      const applyBlank = () => {
+        state.schema = JSON.parse(JSON.stringify(BLANK_PAGE_SCHEMA));
+        state.records = JSON.parse(JSON.stringify(BLANK_PAGE_RECORDS));
+        state.sort = { colId: null, direction: 'asc' };
+        state.searchQuery = '';
+        state.filterCol = '';
+        hasUnsavedChanges = false;
+        updateManualSaveBtn();
+        render();
+        showToast('📄 Created clean blank page');
+      };
+
+      if (hasUnsavedChanges) {
+        customConfirm(
+          'New Blank Page',
+          'You have unsaved changes. Start a clean blank page anyway?',
+          'Start Blank',
+          applyBlank
+        );
+      } else {
+        applyBlank();
+      }
+    }
+
+    function loadSavedData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          showToast('No saved database found in storage');
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.schema) && Array.isArray(parsed.records)) {
+          state.schema = parsed.schema;
+          state.records = parsed.records;
+          state.sort = parsed.sort || { colId: null, direction: 'asc' };
+          state.searchQuery = '';
+          state.filterCol = '';
+          if (parsed.theme) state.theme = parsed.theme;
+          if (parsed.activeView) state.activeView = parsed.activeView;
+          
+          hasUnsavedChanges = false;
+          updateManualSaveBtn();
+          updateThemeUI();
+          switchView(state.activeView || 'vertical');
+          showToast('📂 Saved database loaded');
+        } else {
+          showToast('Saved data is empty or invalid');
+        }
+      } catch (e) {
+        console.error('Error loading data:', e);
+        showToast('❌ Failed to load saved data');
+      }
+    }
+
+    function toggleTheme() {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      updateThemeUI();
+      showToast(`Switched to ${state.theme === 'dark' ? 'Night' : 'Normal'} mode`);
+    }
+
+    function updateThemeUI() {
+      const isDark = state.theme === 'dark';
+      document.body.classList.toggle('dark', isDark);
+      const btn = document.getElementById('themeToggleBtn');
+      if (btn) {
+        btn.innerHTML = isDark ? '☀️ Normal' : '🌙 Night';
+        btn.title = isDark ? 'Switch to Normal (Light) Mode' : 'Switch to Night (Dark) Mode';
+      }
+      // Update Android status bar theme color
+      const metaTheme = document.querySelector('meta[name="theme-color"]');
+      if (metaTheme) {
+        metaTheme.setAttribute('content', isDark ? '#090d16' : '#ffffff');
+      }
+    }
+
+    function markUnsaved() {
+      hasUnsavedChanges = true;
+      updateManualSaveBtn();
+    }
+
+    function updateManualSaveBtn() {
+      const btns = document.querySelectorAll('.manual-save-btn');
+      btns.forEach(btn => {
+        if (hasUnsavedChanges) {
+          btn.innerHTML = '💾 Save *';
+          btn.title = 'Unsaved changes. Click to save.';
+          btn.classList.add('has-unsaved');
+        } else {
+          btn.innerHTML = '💾 Save';
+          btn.title = 'All changes saved';
+          btn.classList.remove('has-unsaved');
+        }
+      });
+    }
+
+    function manualSave() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        hasUnsavedChanges = false;
+        updateManualSaveBtn();
+        showToast('💾 Database saved successfully!');
+      } catch (e) {
+        console.error('Save error:', e);
+        showToast('❌ Error saving to storage');
+      }
+    }
+
+    window.addEventListener('beforeunload', (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    function getRowName(row, idx) {
+      if (row._name && String(row._name).trim()) return row._name;
+      return `Row ${idx + 1}`;
+    }
+
+    function switchView(view) {
+      state.activeView = view;
+      document.getElementById('viewGridBtn').classList.toggle('active', view === 'grid');
+      document.getElementById('viewVerticalBtn').classList.toggle('active', view === 'vertical');
+      document.getElementById('viewCardsBtn').classList.toggle('active', view === 'cards');
+      
+      document.getElementById('gridContainer').style.display = view === 'grid' ? 'block' : 'none';
+      document.getElementById('verticalContainer').style.display = view === 'vertical' ? 'block' : 'none';
+      document.getElementById('cardsContainer').style.display = view === 'cards' ? 'flex' : 'none';
+      
+      render();
+    }
+
+    function render() {
+      updateFilterDropdown();
+      if (state.activeView === 'grid') {
+        renderHorizontalGrid();
+      } else if (state.activeView === 'vertical') {
+        renderVerticalGrid();
+      } else {
+        renderCards();
+      }
+      adjustAllTextareas();
+    }
+
+    function adjustAllTextareas() {
+      requestAnimationFrame(() => {
+        document.querySelectorAll('textarea.cell-textarea').forEach(el => autoResizeTextarea(el));
+      });
+    }
+
+    function autoResizeTextarea(el) {
+      if (!el) return;
+      el.style.height = 'auto';
+      const isModal = el.closest('.modal-body');
+      const isCard = el.classList.contains('card-cell-input');
+      const minH = isModal ? 34 : (isCard ? 36 : 28);
+      const scrollH = el.scrollHeight;
+      const calcHeight = Math.max(minH, scrollH);
+      el.style.height = calcHeight + 'px';
+      el.style.overflowX = 'hidden';
+      el.style.overflowY = calcHeight > 180 ? 'auto' : 'hidden';
+    }
+
+    /* VIEW 1: HORIZONTAL GRID */
+    function renderHorizontalGrid() {
+      const thead = document.getElementById('tableHeader');
+      thead.innerHTML = `
+        <th class="col-fixed">
+          <div class="stacked-name-wrap">
+            <div class="stacked-name-text" style="cursor: default;">Row Name</div>
+          </div>
+        </th>
+        ${state.schema.map(col => {
+          return `
+            <th style="width: ${col.width || 180}px; min-width: ${col.width || 180}px;">
+              <div class="stacked-name-wrap">
+                <div class="stacked-name-text" onclick="sortBy('${col.id}')" title="Click to sort by ${escapeHtml(col.name)}">
+                  ${escapeHtml(col.name)}
+                  ${state.sort.colId === col.id ? (state.sort.direction === 'asc' ? ' ▲' : ' ▼') : ''}
+                </div>
+                <div class="stacked-actions-row">
+                  <span class="col-type-tag">${col.type}</span>
+                  <button class="action-icon-btn" title="Rename Field" onclick="event.stopPropagation(); openRenameFieldModal('${col.id}')">✏️</button>
+                  <button class="action-icon-btn danger" title="Delete Field" onclick="event.stopPropagation(); deleteColumn('${col.id}')">&times;</button>
+                </div>
+              </div>
+            </th>
+          `;
+        }).join('')}
+      `;
+
+      const tbody = document.getElementById('tableBody');
+      const records = getFilteredRecords();
+
+      if (records.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="${Math.max(1, state.schema.length + 1)}" style="padding: 30px; text-align: center; color: var(--text-muted);">
+              Empty table — No rows found.
+              <button onclick="addRow()" style="margin-left: 8px; min-height: 28px; padding: 2px 10px; font-size: 12px;">+ Add Row</button>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = records.map((row, idx) => {
+        const name = getRowName(row, idx);
+        return `
+        <tr>
+          <td class="col-fixed">
+            <div class="stacked-name-wrap">
+              <div class="stacked-name-text" onclick="openRenameRowModal('${row.id}')" title="Click to rename row">
+                ${escapeHtml(name)}
+              </div>
+              <div class="stacked-actions-row">
+                <span class="row-num">#${idx + 1}</span>
+                <button class="action-icon-btn" title="Rename Row" onclick="openRenameRowModal('${row.id}')">✏️</button>
+                <button class="action-icon-btn danger" title="Delete Row" onclick="confirmDeleteRow('${row.id}')">&times;</button>
+              </div>
+            </div>
+          </td>
+          ${state.schema.map(col => `<td>${renderFieldControl(row, col, 'grid')}</td>`).join('')}
+        </tr>
+      `}).join('');
+    }
+
+    /* VIEW 2: VERTICAL GRID (AUTO-FITTED FOR ALL PHONES) */
+    function renderVerticalGrid() {
+      const records = getFilteredRecords();
+      const vHeader = document.getElementById('verticalHeader');
+      
+      vHeader.innerHTML = `
+        <th class="vertical-corner-header">
+          <div class="stacked-name-wrap">
+            <div class="stacked-name-text" style="cursor: default;">Field Name</div>
+          </div>
+        </th>
+        ${records.map((row, idx) => {
+          const name = getRowName(row, idx);
+          return `
+            <th style="width: 280px; min-width: 240px; text-align: center;">
+              <div class="stacked-name-wrap">
+                <div class="stacked-name-text" onclick="openRenameRowModal('${row.id}')" title="Click to rename row">
+                  ${escapeHtml(name)}
+                </div>
+                <div class="stacked-actions-row">
+                  <span class="card-row-badge">#${idx + 1}</span>
+                  <button class="action-icon-btn" title="Rename Row" onclick="openRenameRowModal('${row.id}')">✏️</button>
+                  <button class="action-icon-btn danger" title="Delete Row" onclick="confirmDeleteRow('${row.id}')">&times;</button>
+                </div>
+              </div>
+            </th>
+          `;
+        }).join('')}
+      `;
+
+      const vBody = document.getElementById('verticalBody');
+      vBody.innerHTML = `
+        ${state.schema.map(col => {
+          return `
+            <tr>
+              <th class="vertical-field-header">
+                <div class="stacked-name-wrap">
+                  <div class="stacked-name-text" onclick="sortBy('${col.id}')" title="Click to sort: ${escapeHtml(col.name)}">
+                    ${escapeHtml(col.name)}
+                  </div>
+                  <div class="stacked-actions-row">
+                    <span class="col-type-tag">${col.type}</span>
+                    <button class="action-icon-btn" title="Rename Field" onclick="openRenameFieldModal('${col.id}')">✏️</button>
+                    <button class="action-icon-btn danger" title="Delete Field" onclick="deleteColumn('${col.id}')">&times;</button>
+                  </div>
+                </div>
+              </th>
+              ${records.map(row => `<td>${renderFieldControl(row, col, 'grid')}</td>`).join('')}
+            </tr>
+          `;
+        }).join('')}
+        <tr>
+          <th class="vertical-field-header" style="background: var(--surface) !important; text-align: center;">
+            <button class="add-field-btn" onclick="openColumnModal()">+ Add Field</button>
+          </th>
+          ${records.map(() => `<td></td>`).join('')}
+        </tr>
+      `;
+    }
+
+    /* VIEW 3: CARDS VIEW */
+    function renderCards() {
+      const container = document.getElementById('cardsContainer');
+      const records = getFilteredRecords();
+
+      if (records.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding: 40px; color: var(--text-muted); width:100%;">
+            <p style="margin-bottom: 12px; font-size: 14px;">Blank Page — No records found</p>
+            <div style="display:flex; justify-content:center; gap:8px;">
+              <button class="primary" onclick="addRow()">+ Add Row</button>
+              <button onclick="openColumnModal()">+ Add Field</button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = records.map((row, idx) => {
+        const name = getRowName(row, idx);
+        return `
+          <div class="record-card">
+            <div class="card-header">
+              <div class="card-title" onclick="openRenameRowModal('${row.id}')" title="Click to rename row">
+                ${escapeHtml(name)}
+              </div>
+              <div class="card-header-actions-row">
+                <span class="card-row-badge">#${idx + 1}</span>
+                <button class="action-icon-btn" title="Rename Row" onclick="openRenameRowModal('${row.id}')" style="min-height:28px; width:auto; padding:3px 10px; font-size:12px;">✏️ Rename</button>
+                <button class="action-icon-btn danger" title="Delete Row" onclick="confirmDeleteRow('${row.id}')" style="min-height:28px; width:auto; padding:3px 10px; font-size:12px;">🗑️ Delete</button>
+              </div>
+            </div>
+
+            ${state.schema.map(col => `
+              <div class="card-field-vertical">
+                <div class="card-field-header-stacked">
+                  <div class="card-field-name" onclick="openRenameFieldModal('${col.id}')" title="Click to rename field">
+                    ${escapeHtml(col.name)}
+                  </div>
+                  <div class="stacked-actions-row">
+                    <span class="col-type-tag">${col.type}</span>
+                    <button class="action-icon-btn" title="Rename Field" onclick="openRenameFieldModal('${col.id}')">✏️</button>
+                    <button class="action-icon-btn danger" title="Delete Field" onclick="deleteColumn('${col.id}')">&times;</button>
+                  </div>
+                </div>
+                <div class="card-control-wrap">
+                  ${renderFieldControl(row, col, 'card')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }).join('') + `
+        <div style="display:flex; justify-content:center; gap:8px; padding: 10px 0 24px 0; width:100%;">
+          <button class="primary" onclick="openColumnModal()" style="min-height:36px; padding:6px 18px; font-size:13px;">+ Add Field</button>
+          <button onclick="addRow()" style="min-height:36px; padding:6px 18px; font-size:13px;">+ Add Row</button>
+        </div>
+      `;
+    }
+
+    /* Universal Field Control */
+    function renderFieldControl(row, col, context) {
+      const val = row[col.id] !== undefined ? row[col.id] : '';
+      const inputClass = context === 'card' ? 'cell-input card-cell-input' : 'cell-input';
+
+      switch (col.type) {
+        case 'checkbox':
+          return `
+            <label class="touch-switch">
+              <input type="checkbox" ${val ? 'checked' : ''} onchange="updateCell('${row.id}', '${col.id}', this.checked)">
+              <span class="switch-slider"></span>
+            </label>
+          `;
+        case 'select':
+          return `
+            <select class="${inputClass}" onchange="updateCell('${row.id}', '${col.id}', this.value)">
+              <option value="">-- Choose --</option>
+              ${(col.options || []).map(opt => `<option value="${escapeHtml(opt)}" ${val === opt ? 'selected' : ''}>${escapeHtml(opt)}</option>`).join('')}
+            </select>
+          `;
+        case 'number':
+          return `<input type="number" inputmode="decimal" class="${inputClass}" value="${val}" oninput="updateCell('${row.id}', '${col.id}', parseFloat(this.value) || 0)">`;
+        case 'date':
+          return `<input type="date" class="${inputClass}" value="${val}" onchange="updateCell('${row.id}', '${col.id}', this.value)">`;
+        
+        case 'text':
+        default:
+          return `
+            <textarea class="${inputClass} cell-textarea" rows="1" 
+              placeholder="..."
+              oninput="updateCell('${row.id}', '${col.id}', this.value); autoResizeTextarea(this);"
+              onkeyup="autoResizeTextarea(this)">${escapeHtml(String(val))}</textarea>
+          `;
+      }
+    }
+
+    function selectFieldType(type) {
+      document.getElementById('colTypeInput').value = type;
+      document.querySelectorAll('.field-type-item').forEach(item => {
+        item.classList.toggle('selected', item.getAttribute('onclick').includes(`'${type}'`));
+      });
+      document.getElementById('colOptionsGroup').style.display = type === 'select' ? 'flex' : 'none';
+    }
+
+    function updateCell(rowId, colId, value) {
+      const record = state.records.find(r => r.id === rowId);
+      if (record) {
+        record[colId] = value;
+        markUnsaved();
+      }
+    }
+
+    function addRow() {
+      const newRow = { id: 'r_' + Date.now(), _name: `Row ${state.records.length + 1}` };
+      state.schema.forEach(col => {
+        newRow[col.id] = col.type === 'checkbox' ? false : (col.type === 'number' ? 0 : '');
+      });
+      state.records.push(newRow);
+      markUnsaved();
+      render();
+      showToast('New column/row created');
+    }
+
+    function openRenameRowModal(rowId) {
+      activeRenameRowId = rowId;
+      const row = state.records.find(r => r.id === rowId);
+      const idx = state.records.findIndex(r => r.id === rowId);
+      if (!row) return;
+
+      const input = document.getElementById('renameRowInput');
+      input.value = getRowName(row, idx);
+      openModal('renameRowModal');
+      setTimeout(() => {
+        input.focus();
+        autoResizeTextarea(input);
+      }, 50);
+    }
+
+    function saveRowRename() {
+      if (!activeRenameRowId) return;
+      const input = document.getElementById('renameRowInput');
+      const newName = input.value.trim();
+      const row = state.records.find(r => r.id === activeRenameRowId);
+
+      if (row && newName) {
+        row._name = newName;
+        markUnsaved();
+        render();
+        showToast('Renamed successfully');
+      }
+      closeModal('renameRowModal');
+    }
+
+    function openRenameFieldModal(colId) {
+      activeRenameFieldId = colId;
+      const col = state.schema.find(c => c.id === colId);
+      if (!col) return;
+
+      const input = document.getElementById('renameFieldInput');
+      input.value = col.name;
+      openModal('renameFieldModal');
+      setTimeout(() => {
+        input.focus();
+        autoResizeTextarea(input);
+      }, 50);
+    }
+
+    function saveFieldRename() {
+      if (!activeRenameFieldId) return;
+      const newName = document.getElementById('renameFieldInput').value.trim();
+      const col = state.schema.find(c => c.id === activeRenameFieldId);
+
+      if (col && newName) {
+        col.name = newName;
+        markUnsaved();
+        render();
+        showToast(`Field renamed`);
+      }
+      closeModal('renameFieldModal');
+    }
+
+    function confirmDeleteRow(rowId) {
+      const idx = state.records.findIndex(r => r.id === rowId);
+      const row = state.records[idx];
+      const name = row ? getRowName(row, idx) : `Row #${idx + 1}`;
+      
+      customConfirm(
+        'Delete Column / Row',
+        `Are you sure you want to delete ${escapeHtml(name)}?`,
+        'Delete',
+        () => {
+          state.records = state.records.filter(r => r.id !== rowId);
+          markUnsaved();
+          render();
+          showToast('Removed');
+        }
+      );
+    }
+
+    function customConfirm(title, message, okText, onConfirm) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalMessage').textContent = message;
+      const okBtn = document.getElementById('confirmOkBtn');
+      okBtn.textContent = okText;
+      
+      pendingConfirmAction = onConfirm;
+      openModal('confirmModal');
+    }
+
+    document.getElementById('confirmOkBtn').onclick = function() {
+      if (pendingConfirmAction) {
+        pendingConfirmAction();
+        pendingConfirmAction = null;
+      }
+      closeModal('confirmModal');
+    };
+
+    function deleteColumn(colId) {
+      const col = state.schema.find(c => c.id === colId);
+      const colName = col ? `"${col.name}"` : 'this field';
+
+      customConfirm(
+        'Delete Field',
+        `Are you sure you want to delete ${colName}? All values stored in this field will be erased.`,
+        'Delete Field',
+        () => {
+          state.schema = state.schema.filter(c => c.id !== colId);
+          state.records.forEach(r => delete r[colId]);
+          markUnsaved();
+          render();
+          showToast(`Field removed`);
+        }
+      );
+    }
+
+    function updateFilterDropdown() {
+      const dropdown = document.getElementById('filterColumn');
+      const cur = state.filterCol;
+      dropdown.innerHTML = `<option value="">All Fields</option>` + 
+        state.schema.map(c => `<option value="${c.id}" ${cur === c.id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
+    }
+
+    function handleSearch(val) {
+      state.searchQuery = val.trim().toLowerCase();
+      render();
+    }
+
+    function applyFilters() {
+      state.filterCol = document.getElementById('filterColumn').value;
+      render();
+    }
+
+    function sortBy(colId) {
+      if (state.sort.colId === colId) {
+        state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        state.sort.colId = colId;
+        state.sort.direction = 'asc';
+      }
+      render();
+    }
+
+    function getFilteredRecords() {
+      let result = [...state.records];
+      if (state.searchQuery) {
+        result = result.filter(r => {
+          if (r._name && String(r._name).toLowerCase().includes(state.searchQuery)) return true;
+          if (state.filterCol) {
+            return String(r[state.filterCol] || '').toLowerCase().includes(state.searchQuery);
+          }
+          return state.schema.some(col => String(r[col.id] || '').toLowerCase().includes(state.searchQuery));
+        });
+      }
+      if (state.sort.colId) {
+        const { colId, direction } = state.sort;
+        const col = state.schema.find(c => c.id === colId);
+        result.sort((a, b) => {
+          let valA = a[colId] ?? '';
+          let valB = b[colId] ?? '';
+          if (col?.type === 'number') {
+            valA = Number(valA) || 0;
+            valB = Number(valB) || 0;
+          }
+          if (valA < valB) return direction === 'asc' ? -1 : 1;
+          if (valA > valB) return direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+      return result;
+    }
+
+    /* Print & PNG Generator */
+    function generatePrintable() {
+      const records = getFilteredRecords();
+      let currentView = state.activeView || 'vertical';
+      if (currentView === 'grid') currentView = 'horizontal';
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString(undefined, { 
+        year: 'numeric', month: 'short', day: 'numeric', 
+        hour: '2-digit', minute: '2-digit' 
+      });
+
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        showToast('Please allow popups to open printable report');
+        return;
+      }
+
+      const schemaJson = JSON.stringify(state.schema);
+      const recordsJson = JSON.stringify(records);
+
+      const docHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>GridBase Printable Report</title>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+          <style id="page-size-style">
+            @page { size: 7in 5in; margin: 0; }
+          </style>
+          <style>
+            * { box-sizing: border-box; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              color: #0f172a;
+              background: #e2e8f0;
+              margin: 0;
+              padding: 12px;
+              font-size: 11px;
+            }
+            .action-bar {
+              max-width: 100%;
+              width: 7in;
+              margin: 0 auto 12px auto;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              gap: 8px;
+              flex-wrap: wrap;
+            }
+            .action-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+            .btn {
+              background: #2563eb;
+              color: white;
+              border: none;
+              padding: 6px 11px;
+              border-radius: 5px;
+              font-size: 11px;
+              font-weight: 600;
+              cursor: pointer;
+              min-height: 32px;
+              touch-action: manipulation;
+              display: inline-flex;
+              align-items: center;
+              gap: 4px;
+            }
+            .btn:hover { background: #1d4ed8; }
+            .btn.btn-png { background: #059669; color: white; }
+            .btn.btn-png:hover { background: #047857; }
+            .btn.secondary { background: #ffffff; color: #334155; border: 1px solid #cbd5e1; }
+            .btn.secondary:hover { background: #f1f5f9; }
+
+            .view-toggle-bar { display: inline-flex; background: #cbd5e1; padding: 2px; border-radius: 5px; }
+            .view-toggle-bar button {
+              border: none; background: transparent; padding: 4px 8px; font-size: 11px; font-weight: 600;
+              border-radius: 4px; color: #334155; cursor: pointer; white-space: nowrap;
+            }
+            .view-toggle-bar button.active { background: #ffffff; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+
+            select.opt-select {
+              background: #ffffff; color: #334155; border: 1px solid #cbd5e1; border-radius: 5px;
+              padding: 4px 8px; font-size: 11px; font-weight: 600; min-height: 32px; outline: none; cursor: pointer;
+            }
+
+            .sheet-viewport { display: flex; justify-content: center; align-items: flex-start; width: 100%; overflow: auto; }
+            .sheet {
+              width: 7in; min-height: 5in; margin: 0 auto; background: #ffffff; padding: 0.25in;
+              box-shadow: 0 4px 14px rgba(0,0,0,0.12); border-radius: 4px; position: relative;
+            }
+
+            .table-wrap { width: 100%; }
+            table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: auto; word-break: break-word; }
+            th, td { border: 1px solid #cbd5e1; padding: 5px 6px; vertical-align: middle !important; line-height: 1.3; text-align: center !important; }
+            thead th { background-color: #f8fafc; text-align: center !important; border-bottom: 2px solid #94a3b8; }
+            td { text-align: center !important; }
+            tr { page-break-inside: avoid; }
+            
+            @media print {
+              .action-bar { display: none !important; }
+              body { background: #ffffff !important; padding: 0 !important; margin: 0 !important; }
+              .sheet { width: 100% !important; min-height: auto !important; margin: 0 !important; box-shadow: none !important; border-radius: 0 !important; padding: 0.2in !important; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="action-bar" id="actionBar">
+            <div class="action-left">
+              <button class="btn" onclick="window.print()">🖨️ Print</button>
+              <button class="btn btn-png" id="pngBtn" onclick="generatePNG()">🖼️ PNG</button>
+              
+              <div class="view-toggle-bar">
+                <button id="pViewVertical" class="active" onclick="switchPrintView('vertical')">Vertical</button>
+                <button id="pViewHorizontal" onclick="switchPrintView('horizontal')">Horizontal</button>
+                <button id="pViewCards" onclick="switchPrintView('cards')">Cards</button>
+              </div>
+
+              <select class="opt-select" id="sizeSelector" onchange="changePageSize(this.value)">
+                <option value="5x7">Card (7×5")</option>
+                <option value="4x6">Postcard (6×4")</option>
+                <option value="letter">Letter / A4</option>
+                <option value="auto">Auto-Fit to Content</option>
+              </select>
+
+              <button class="btn secondary" id="orientBtn" onclick="togglePageOrientation()">🔄 Portrait</button>
+              <button class="btn secondary" onclick="window.close()">Close</button>
+            </div>
+            <div id="sizeBadge" style="font-size: 11px; color: #475569; font-weight:700;">7×5" Landscape</div>
+          </div>
+
+          <div class="sheet-viewport">
+            <div class="sheet" id="printSheet">
+              <div id="sheetContent" class="table-wrap"></div>
+            </div>
+          </div>
+
+          <script>
+            const schema = ${schemaJson};
+            const records = ${recordsJson};
+            let currentView = 'vertical';
+            let isLandscape = true;
+            let currentSize = '5x7';
+
+            const SIZES = {
+              '5x7':   { portrait: { w: '5in', h: '7in' },  landscape: { w: '7in', h: '5in' } },
+              '4x6':   { portrait: { w: '4in', h: '6in' },  landscape: { w: '6in', h: '4in' } },
+              'letter':{ portrait: { w: '8.5in', h: '11in'}, landscape: { w: '11in', h: '8.5in'} },
+              'auto':  { portrait: { w: 'max-content', h: 'auto' }, landscape: { w: 'max-content', h: 'auto' } }
+            };
+
+            function escapeHtml(str) {
+              return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            }
+
+            function formatPrintVal(val) {
+              if (val === '' || val === null || val === undefined) return '<span style="color:#cbd5e1;">—</span>';
+              return escapeHtml(String(val)).replace(/\\n/g, '<br>');
+            }
+
+            function getRowName(row, idx) {
+              return (row._name && String(row._name).trim()) ? row._name : ('Row ' + (idx + 1));
+            }
+
+            function renderVerticalHtml() {
+              return '<table>' +
+                '<thead>' +
+                  '<tr>' +
+                    '<th style="width: 140px; text-align: center; background: #e2e8f0; font-weight: 700;">Field Name</th>' +
+                    records.map((row, idx) => '<th style="text-align: center;"><div style="font-weight:700; text-align:center;">' + escapeHtml(getRowName(row, idx)).replace(/\\n/g, '<br>') + '</div></th>').join('') +
+                  '</tr>' +
+                '</thead>' +
+                '<tbody>' +
+                  schema.map(col =>
+                    '<tr>' +
+                      '<th style="background: #f8fafc; text-align: center; font-weight: 600;"><div style="text-align:center;">' + escapeHtml(col.name).replace(/\\n/g, '<br>') + '</div></th>' +
+                      records.map(row => '<td style="text-align:center;">' + formatPrintVal(row[col.id]) + '</td>').join('') +
+                    '</tr>'
+                  ).join('') +
+                '</tbody>' +
+              '</table>';
+            }
+
+            function renderHorizontalHtml() {
+              return '<table>' +
+                '<thead>' +
+                  '<tr>' +
+                    '<th style="width: 28px; text-align:center;">#</th>' +
+                    '<th style="width: 150px; text-align:center;">Row Name</th>' +
+                    schema.map(col => '<th style="text-align:center;"><div style="font-weight:700; text-align:center;">' + escapeHtml(col.name).replace(/\\n/g, '<br>') + '</div></th>').join('') +
+                  '</tr>' +
+                '</thead>' +
+                '<tbody>' +
+                  records.map((row, idx) =>
+                    '<tr>' +
+                      '<td style="font-weight:600; color:#475569; text-align:center;">' + (idx + 1) + '</td>' +
+                      '<td style="font-weight:600; text-align:center;">' + escapeHtml(getRowName(row, idx)).replace(/\\n/g, '<br>') + '</td>' +
+                      schema.map(col => '<td style="text-align:center;">' + formatPrintVal(row[col.id]) + '</td>').join('') +
+                    '</tr>'
+                  ).join('') +
+                '</tbody>' +
+              '</table>';
+            }
+
+            function renderCardsHtml() {
+              return '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;">' +
+                records.map((row, idx) =>
+                  '<div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; background:#fff; text-align:center;">' +
+                    '<div style="font-size: 12px; font-weight: 800; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 4px; margin-bottom: 6px; text-align:center;">' +
+                      escapeHtml(getRowName(row, idx)).replace(/\\n/g, '<br>') +
+                    '</div>' +
+                    schema.map(col =>
+                      '<div style="margin-bottom: 4px; text-align: center;">' +
+                        '<div style="font-size: 9px; font-weight: 700; color: #475569;">' + escapeHtml(col.name) + '</div>' +
+                        '<div style="font-size: 10px; margin-top: 1px;">' + formatPrintVal(row[col.id]) + '</div>' +
+                      '</div>'
+                    ).join('') +
+                  '</div>'
+                ).join('') +
+              '</div>';
+            }
+
+            function renderContent() {
+              const container = document.getElementById('sheetContent');
+              if (currentView === 'vertical') {
+                container.innerHTML = renderVerticalHtml();
+              } else if (currentView === 'horizontal') {
+                container.innerHTML = renderHorizontalHtml();
+              } else {
+                container.innerHTML = renderCardsHtml();
+              }
+            }
+
+            function switchPrintView(view) {
+              currentView = view;
+              document.getElementById('pViewVertical').classList.toggle('active', view === 'vertical');
+              document.getElementById('pViewHorizontal').classList.toggle('active', view === 'horizontal');
+              document.getElementById('pViewCards').classList.toggle('active', view === 'cards');
+              renderContent();
+            }
+
+            function changePageSize(sizeKey) {
+              currentSize = sizeKey;
+              applyDimensions();
+              renderContent();
+            }
+
+            function togglePageOrientation() {
+              isLandscape = !isLandscape;
+              applyDimensions();
+              renderContent();
+            }
+
+            function applyDimensions() {
+              const pageStyle = document.getElementById('page-size-style');
+              const sheet = document.getElementById('printSheet');
+              const actionBar = document.getElementById('actionBar');
+              const orientBtn = document.getElementById('orientBtn');
+              const sizeBadge = document.getElementById('sizeBadge');
+
+              const dimObj = SIZES[currentSize] || SIZES['5x7'];
+              const config = isLandscape ? dimObj.landscape : dimObj.portrait;
+
+              if (currentSize === 'auto') {
+                pageStyle.innerHTML = '@page { size: auto; margin: 0; }';
+                sheet.style.width = 'max-content';
+                sheet.style.minWidth = '5in';
+                sheet.style.minHeight = 'auto';
+                actionBar.style.width = '100%';
+                actionBar.style.maxWidth = '900px';
+                sizeBadge.innerText = 'Fit Content (Auto)';
+              } else {
+                pageStyle.innerHTML = '@page { size: ' + config.w + ' ' + config.h + '; margin: 0; }';
+                sheet.style.width = config.w;
+                sheet.style.minHeight = config.h;
+                sheet.style.minWidth = 'auto';
+                actionBar.style.width = config.w;
+                actionBar.style.maxWidth = '100%';
+                sizeBadge.innerText = (isLandscape ? 'Landscape' : 'Portrait') + ' (' + config.w + '×' + config.h + ')';
+              }
+
+              orientBtn.innerHTML = isLandscape ? '🔄 Portrait' : '🔄 Landscape';
+            }
+
+            async function generatePNG() {
+              const btn = document.getElementById('pngBtn');
+              const originalText = btn.innerHTML;
+
+              if (typeof html2canvas === 'undefined') {
+                alert('Image renderer loading, please wait...');
+                return;
+              }
+
+              btn.innerHTML = '⏳ Rendering...';
+              btn.disabled = true;
+
+              try {
+                const sheet = document.getElementById('printSheet');
+                const canvas = await html2canvas(sheet, {
+                  scale: 3,
+                  backgroundColor: '#ffffff',
+                  useCORS: true,
+                  logging: false
+                });
+
+                const link = document.createElement('a');
+                link.download = 'CPM_Lineup.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+              } catch (err) {
+                console.error(err);
+                alert('Error generating PNG image.');
+              } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+              }
+            }
+
+            applyDimensions();
+            renderContent();
+          <\/script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.open();
+      printWindow.document.write(docHtml);
+      printWindow.document.close();
+      showToast('Opened printable view');
+    }
+
+    /* MODALS & ANDROID BACK BUTTON SUPPORT */
+    function openModal(id) { 
+      history.pushState({ modalOpen: id }, '');
+      document.getElementById(id).classList.add('active'); 
+    }
+    
+    function closeModal(id) { 
+      document.getElementById(id).classList.remove('active'); 
+      if (history.state && history.state.modalOpen === id) {
+        history.back();
+      }
+      render();
+    }
+
+    function openColumnModal() {
+      const colInput = document.getElementById('colNameInput');
+      colInput.value = '';
+      selectFieldType('text');
+      document.getElementById('colChoicesInput').value = '';
+      openModal('columnModal');
+      setTimeout(() => {
+        colInput.focus();
+        autoResizeTextarea(colInput);
+      }, 50);
+    }
+
+    function saveColumn() {
+      const name = document.getElementById('colNameInput').value.trim();
+      const type = document.getElementById('colTypeInput').value;
+      if (!name) {
+        showToast('Please enter a field name');
+        return;
+      }
+
+      const newCol = { id: 'f_' + Date.now(), name, type, width: 220 };
+      if (type === 'select') {
+        newCol.options = document.getElementById('colChoicesInput').value.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      state.schema.push(newCol);
+      markUnsaved();
+      closeModal('columnModal');
+      render();
+      showToast(`Field created`);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    function exportCSV() {
+      const headers = state.schema.map(c => `"${c.name.replace(/"/g, '""')}"`).join(',');
+      const rows = state.records.map(r => {
+        return state.schema.map(c => `"${String(r[c.id] ?? '').replace(/"/g, '""')}"`).join(',');
+      });
+      downloadBlob([headers, ...rows].join('\r\n'), 'cpm_lineup_export.csv', 'text/csv;charset=utf-8;');
+    }
+
+    function exportJSON() {
+      downloadBlob(JSON.stringify(state, null, 2), 'cpm_lineup_backup.json', 'application/json');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.schema && parsed.records) {
+            state = parsed;
+            updateThemeUI();
+            markUnsaved();
+            render();
+            showToast('Database restored (click Save to keep)');
+          }
+        } catch (err) {
+          showToast('Invalid backup file');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function clearData() {
+      customConfirm(
+        'Reset to CPM Line-up',
+        'Reset this sheet back to the default CPM Line-up?',
+        'Reset',
+        () => {
+          loadDefaultTemplate();
+          updateThemeUI();
+          hasUnsavedChanges = false;
+          updateManualSaveBtn();
+          switchView('vertical');
+          showToast('Reset to default CPM Line-up');
+        }
+      );
+    }
+
+    function downloadBlob(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
